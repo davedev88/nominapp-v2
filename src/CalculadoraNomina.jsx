@@ -83,93 +83,108 @@ export default function CalculadoraNomina() {
   };
 
   return (
-    <div className="p-4 max-w-3xl mx-auto space-y-4">
-      <h1 className="text-2xl font-bold">Calculadora de Nómina</h1>
+    <div className="p-4 max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="md:col-span-2 space-y-4">
+        <h1 className="text-2xl font-bold">Calculadora de Nómina</h1>
 
-      <div className="flex gap-4 items-center">
-        <label>IRPF (%):</label>
-        <input
-          type="number"
-          value={irpf}
-          onChange={(e) => setIrpf(parseFloat(e.target.value))}
-          className="border px-2 py-1 rounded w-20"
-        />
-      </div>
+        <div className="flex gap-4 items-center">
+          <label>IRPF (%):</label>
+          <input
+            type="number"
+            value={irpf}
+            onChange={(e) => setIrpf(parseFloat(e.target.value))}
+            className="border px-2 py-1 rounded w-20"
+          />
+        </div>
 
-      {horario.map((dia, i) => (
-        <div key={i} className="border rounded p-4 space-y-2">
-          <h2 className="font-semibold">{diasSemana[i]}</h2>
-          <div className="grid grid-cols-2 gap-4 items-center">
-            <label>Hora entrada:</label>
-            <input
-              type="time"
-              value={dia.entrada}
-              onChange={(e) => {
-                const copia = [...horario];
-                copia[i].entrada = e.target.value;
-                setHorario(copia);
-              }}
-            />
-
-            <label>Hora salida:</label>
-            <input
-              type="time"
-              value={dia.salida}
-              onChange={(e) => {
-                const copia = [...horario];
-                copia[i].salida = e.target.value;
-                setHorario(copia);
-              }}
-            />
-
-            <label>Horas flexibles:</label>
-            <input
-              type="number"
-              value={dia.flexHoras}
-              onChange={(e) => {
-                const copia = [...horario];
-                copia[i].flexHoras = parseInt(e.target.value || 0);
-                setHorario(copia);
-              }}
-            />
-
-            <label>Minutos flexibles:</label>
-            <input
-              type="number"
-              value={dia.flexMin}
-              onChange={(e) => {
-                const copia = [...horario];
-                copia[i].flexMin = parseInt(e.target.value || 0);
-                setHorario(copia);
-              }}
-            />
-
-            <label>
+        {horario.map((dia, i) => (
+          <div key={i} className="border rounded p-4 space-y-2">
+            <h2 className="font-semibold">{diasSemana[i]}</h2>
+            <div className="grid grid-cols-2 gap-4 items-center">
+              <label>Hora entrada:</label>
               <input
-                type="checkbox"
-                checked={dia.festivo}
+                type="time"
+                value={dia.entrada}
                 onChange={(e) => {
                   const copia = [...horario];
-                  copia[i].festivo = e.target.checked;
+                  copia[i].entrada = e.target.value;
                   setHorario(copia);
                 }}
-              /> Festivo
-            </label>
+              />
+
+              <label>Hora salida:</label>
+              <input
+                type="time"
+                value={dia.salida}
+                onChange={(e) => {
+                  const copia = [...horario];
+                  copia[i].salida = e.target.value;
+                  setHorario(copia);
+                }}
+              />
+
+              <label>Horas flexibles:</label>
+              <input
+                type="number"
+                value={dia.flexHoras}
+                onChange={(e) => {
+                  const copia = [...horario];
+                  copia[i].flexHoras = parseInt(e.target.value || 0);
+                  setHorario(copia);
+                }}
+              />
+
+              <label>Minutos flexibles:</label>
+              <input
+                type="number"
+                value={dia.flexMin}
+                onChange={(e) => {
+                  const copia = [...horario];
+                  copia[i].flexMin = parseInt(e.target.value || 0);
+                  setHorario(copia);
+                }}
+              />
+
+              <label className="col-span-2">
+                <input
+                  type="checkbox"
+                  checked={dia.festivo}
+                  onChange={(e) => {
+                    const copia = [...horario];
+                    copia[i].festivo = e.target.checked;
+                    setHorario(copia);
+                  }}
+                /> Festivo
+              </label>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
 
-      <button onClick={calcular} className="bg-blue-600 text-white px-4 py-2 rounded">
-        Calcular nómina
-      </button>
+        <button onClick={calcular} className="bg-blue-600 text-white px-4 py-2 rounded">
+          Calcular nómina
+        </button>
 
-      {resultado && (
-        <div className="text-lg font-semibold">
-          <p>💰 Bruto semanal: {resultado.bruto} €</p>
-          <p>🧾 Neto estimado: {resultado.neto} €</p>
-          <p>⏱️ Total horas: {resultado.horas}</p>
-        </div>
-      )}
+        {resultado && (
+          <div className="text-lg font-semibold">
+            <p>💰 Bruto semanal: {resultado.bruto} €</p>
+            <p>🧾 Neto estimado: {resultado.neto} €</p>
+            <p>⏱️ Total horas: {resultado.horas}</p>
+          </div>
+        )}
+      </div>
+
+      <aside className="bg-gray-100 border rounded p-4 text-sm space-y-2">
+        <h2 className="text-lg font-bold mb-2">📘 Leyenda de conceptos</h2>
+        <ul className="list-disc pl-4">
+          <li><strong>Base hora:</strong> 14,64 €/h</li>
+          <li><strong>Plus nocturno:</strong> 3,72 €/h (de 22:00 a 06:00)</li>
+          <li><strong>Plus festivo:</strong> 10,98 €/h (si se marca festivo)</li>
+          <li><strong>Plus weekend:</strong> 5,80 €/h (solo Sábado y Domingo)</li>
+          <li><strong>Flexibles:</strong> Añade tiempo manual extra al turno</li>
+          <li><strong>IRPF:</strong> Retención según porcentaje que pongas</li>
+          <li><strong>SS:</strong> Se descuenta automáticamente un 11%</li>
+        </ul>
+      </aside>
     </div>
   );
 }
