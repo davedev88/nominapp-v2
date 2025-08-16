@@ -1,18 +1,14 @@
-
 import { useState } from "react";
-import { Input } from "./components/ui/input";
-import { Button } from "./components/ui/button";
-import { Card, CardContent } from "./components/ui/card";
 
 const horarioBase = {
   entrada: "18:50",
   salida: "02:00",
-  flexible: null, // "azul" | "rojo" | null
+  flexible: 0, // en minutos
   festivo: false,
   weekend: false,
 };
 
-const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+const diasPorDefecto = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
 
 const calcularHorasNocturnas = (entrada, salida) => {
   const [h1, m1] = entrada.split(":").map(Number);
@@ -28,78 +24,121 @@ const calcularHorasNocturnas = (entrada, salida) => {
   for (let t = start; t < end; t++) {
     if (t >= nocturnaInicio || t < nocturnaFin - 1440) nocturna++;
   }
-  return (nocturna / 60).toFixed(2);
+  return nocturna;
 };
 
 export default function CalculadoraNomina() {
+  const [turnoBase, setTurnoBase] = useState({
+    dias: diasPorDefecto,
+    entrada: "18:50",
+    salida: "02:00",
+  });
+
+  const [irpf, setIrpf] = useState(14);
+
   const [horario, setHorario] = useState(
-    diasSemana.map(() => ({ ...horarioBase }))
+    turnoBase.dias.map(() => ({ ...horarioBase }))
   );
   const [resultado, setResultado] = useState(null);
 
   const calcular = () => {
     let totalBruto = 0;
-    let totalHoras = 0;
+    let totalMinutos = 0;
 
     horario.forEach((dia) => {
-      let horas = 7.17;
-      if (dia.flexible === "azul") horas += 1;
-      else if (dia.flexible === "rojo") horas += 1;
+      const baseMinutos = 7 * 60 + 10;
+      const minutosFlexibles = parseInt(dia.flexible || 0);
+      const totalDiaMinutos = baseMinutos + minutosFlexibles;
+      totalMinutos += totalDiaMinutos;
 
-      totalHoras += horas;
+      const tarifaBase = 14.64 / 60;
+      const plusNocturno = 3.72 / 60;
+      const plusFestivo = 10.98 / 60;
+      const plusWeekend = 5.80 / 60;
 
-      let tarifaBase = 14.64;
-      let plusNocturno = 3.72;
-      let plusFestivo = 10.98;
-      let plusWeekend = 5.80;
-
-      let nocturnas = parseFloat(
-        calcularHorasNocturnas(dia.entrada || "18:50", dia.salida || "02:00")
+      const nocturnos = calcularHorasNocturnas(
+        dia.entrada || turnoBase.entrada,
+        dia.salida || turnoBase.salida
       );
 
-      totalBruto += horas * tarifaBase;
+      totalBruto += totalDiaMinutos * tarifaBase;
 
-      if (dia.flexible === "azul") totalBruto += nocturnas * plusNocturno;
-      if (!dia.flexible) totalBruto += nocturnas * plusNocturno;
+      if (dia.flexible > 0 || dia.flexible === 0) {
+        totalBruto += nocturnos * plusNocturno;
+      }
 
-      if (dia.festivo)
+      if (dia.festivo) {
         totalBruto +=
-          nocturnas * (plusFestivo + plusNocturno) +
-          (horas - nocturnas) * plusFestivo;
+          nocturnos * (plusFestivo + plusNocturno) +
+          (totalDiaMinutos - nocturnos) * plusFestivo;
+      }
 
-      if (dia.weekend) totalBruto += horas * plusWeekend;
+      if (dia.weekend) {
+        totalBruto += totalDiaMinutos * plusWeekend;
+      }
     });
 
-    const estimacionIRPF = 0.14;
-    const estimacionSS = 0.11;
-    const neto = totalBruto * (1 - estimacionIRPF - estimacionSS);
+    const neto = totalBruto * (1 - irpf / 100 - 0.11);
 
-    setResultado({ bruto: totalBruto.toFixed(2), neto: neto.toFixed(2) });
+    setResultado({
+      bruto: totalBruto.toFixed(2),
+      neto: neto.toFixed(2),
+      horas: (totalMinutos / 60).toFixed(2),
+    });
   };
 
   return (
-    <div className="p-4 max-w-3xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold">Calculadora de Nómina Semanal (Turno 4B)</h1>
+    <div className="p-4 max-w-3xl mx-auto space-y-4">
+      <h1 className="text-2xl font-bold">Calculadora de Nómina</h1>
+
+      <div className="flex gap-2 items-center">
+        <label>IRPF (%):</label>
+        <input
+          type="number"
+          value={irpf}
+          onChange={(e) => setIrpf(parseFloat(e.target.value))}
+          className="border px-2 py-1 rounded w-20"
+        />
+      </div>
+
       {horario.map((dia, i) => (
-        <Card key={i}>
-          <CardContent className="p-4 space-y-2">
-            <h2 className="font-semibold">{diasSemana[i]}</h2>
-            <div className="flex gap-2 items-center">
-              <label>Flexible:</label>
-              <select
-                className="border rounded px-2 py-1"
-                value={dia.flexible || ""}
-                onChange={(e) => {
-                  const copia = [...horario];
-                  copia[i].flexible = e.target.value || null;
-                  setHorario(copia);
-                }}
-              >
-                <option value="">Ninguna</option>
-                <option value="azul">Hecha (con plus)</option>
-                <option value="rojo">No hecha (sin plus)</option>
-              </select>
-              <label className="ml-4">Festivo:</label>
+        <div key={i} className="border rounded p-4 space-y-2">
+          <h2 className="font-semibold">{turnoBase.dias[i]}</h2>
+          <div className="grid grid-cols-2 gap-4 items-center">
+            <label>Hora entrada:</label>
+            <input
+              type="time"
+              value={dia.entrada}
+              onChange={(e) => {
+                const copia = [...horario];
+                copia[i].entrada = e.target.value;
+                setHorario(copia);
+              }}
+            />
+
+            <label>Hora salida:</label>
+            <input
+              type="time"
+              value={dia.salida}
+              onChange={(e) => {
+                const copia = [...horario];
+                copia[i].salida = e.target.value;
+                setHorario(copia);
+              }}
+            />
+
+            <label>Minutos flexibles (manual):</label>
+            <input
+              type="number"
+              value={dia.flexible}
+              onChange={(e) => {
+                const copia = [...horario];
+                copia[i].flexible = parseInt(e.target.value || 0);
+                setHorario(copia);
+              }}
+            />
+
+            <label>
               <input
                 type="checkbox"
                 checked={dia.festivo}
@@ -108,8 +147,10 @@ export default function CalculadoraNomina() {
                   copia[i].festivo = e.target.checked;
                   setHorario(copia);
                 }}
-              />
-              <label className="ml-4">Weekend:</label>
+              /> Festivo
+            </label>
+
+            <label>
               <input
                 type="checkbox"
                 checked={dia.weekend}
@@ -118,18 +159,21 @@ export default function CalculadoraNomina() {
                   copia[i].weekend = e.target.checked;
                   setHorario(copia);
                 }}
-              />
-            </div>
-          </CardContent>
-        </Card>
+              /> Weekend
+            </label>
+          </div>
+        </div>
       ))}
 
-      <Button onClick={calcular}>Calcular nómina estimada</Button>
+      <button onClick={calcular} className="bg-blue-600 text-white px-4 py-2 rounded">
+        Calcular nómina
+      </button>
 
       {resultado && (
         <div className="text-lg font-semibold">
-          <p>💰 Bruto semanal estimado: {resultado.bruto} €</p>
-          <p>🧾 Neto aproximado (IRPF + SS): {resultado.neto} €</p>
+          <p>💰 Bruto semanal: {resultado.bruto} €</p>
+          <p>🧾 Neto estimado: {resultado.neto} €</p>
+          <p>⏱️ Total horas: {resultado.horas}</p>
         </div>
       )}
     </div>
