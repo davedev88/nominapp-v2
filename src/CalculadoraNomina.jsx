@@ -5,14 +5,15 @@ const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sába
 const horarioBase = {
   entrada: "",
   salida: "",
-  flexible: 0,
+  flexHoras: 0,
+  flexMin: 0,
   festivo: false,
   weekend: false,
 };
 
 const calcularHorasNocturnas = (entrada, salida) => {
-  const [h1, m1] = entrada.split(":").map(Number);
-  const [h2, m2] = salida.split(":").map(Number);
+  const [h1, m1] = entrada.split(":" ).map(Number);
+  const [h2, m2] = salida.split(":" ).map(Number);
 
   let start = h1 * 60 + m1;
   let end = h2 < h1 ? h2 * 60 + m2 + 1440 : h2 * 60 + m2;
@@ -41,11 +42,13 @@ export default function CalculadoraNomina() {
     horario.forEach((dia, i) => {
       if (!dia.entrada || !dia.salida) return;
 
-      const [h1, m1] = dia.entrada.split(":".map(Number));
-      const [h2, m2] = dia.salida.split(":".map(Number));
+      const [h1, m1] = dia.entrada.split(":" ).map(Number);
+      const [h2, m2] = dia.salida.split(":" ).map(Number);
       const start = h1 * 60 + m1;
       const end = h2 < h1 ? h2 * 60 + m2 + 1440 : h2 * 60 + m2;
-      const duracion = end - start + parseInt(dia.flexible || 0);
+
+      const flexibles = parseInt(dia.flexHoras || 0) * 60 + parseInt(dia.flexMin || 0);
+      const duracion = end - start + flexibles;
 
       totalMinutos += duracion;
 
@@ -65,7 +68,7 @@ export default function CalculadoraNomina() {
           (duracion - nocturnos) * plusFestivo;
       }
 
-      if (["Viernes", "Sábado", "Domingo"].includes(diasSemana[i]) && dia.weekend) {
+      if (["Sábado", "Domingo"].includes(diasSemana[i])) {
         totalBruto += duracion * plusWeekend;
       }
     });
@@ -119,13 +122,24 @@ export default function CalculadoraNomina() {
               }}
             />
 
-            <label>Minutos flexibles (manual):</label>
+            <label>Horas flexibles:</label>
             <input
               type="number"
-              value={dia.flexible}
+              value={dia.flexHoras}
               onChange={(e) => {
                 const copia = [...horario];
-                copia[i].flexible = parseInt(e.target.value || 0);
+                copia[i].flexHoras = parseInt(e.target.value || 0);
+                setHorario(copia);
+              }}
+            />
+
+            <label>Minutos flexibles:</label>
+            <input
+              type="number"
+              value={dia.flexMin}
+              onChange={(e) => {
+                const copia = [...horario];
+                copia[i].flexMin = parseInt(e.target.value || 0);
                 setHorario(copia);
               }}
             />
@@ -140,18 +154,6 @@ export default function CalculadoraNomina() {
                   setHorario(copia);
                 }}
               /> Festivo
-            </label>
-
-            <label>
-              <input
-                type="checkbox"
-                checked={dia.weekend}
-                onChange={(e) => {
-                  const copia = [...horario];
-                  copia[i].weekend = e.target.checked;
-                  setHorario(copia);
-                }}
-              /> Weekend
             </label>
           </div>
         </div>
