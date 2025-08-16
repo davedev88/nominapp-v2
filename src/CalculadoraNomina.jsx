@@ -8,12 +8,11 @@ const horarioBase = {
   flexHoras: 0,
   flexMin: 0,
   festivo: false,
-  weekend: false,
 };
 
 const calcularHorasNocturnas = (entrada, salida) => {
-  const [h1, m1] = entrada.split(":" ).map(Number);
-  const [h2, m2] = salida.split(":" ).map(Number);
+  const [h1, m1] = entrada.split(":").map(Number);
+  const [h2, m2] = salida.split(":").map(Number);
 
   let start = h1 * 60 + m1;
   let end = h2 < h1 ? h2 * 60 + m2 + 1440 : h2 * 60 + m2;
@@ -42,8 +41,8 @@ export default function CalculadoraNomina() {
     horario.forEach((dia, i) => {
       if (!dia.entrada || !dia.salida) return;
 
-      const [h1, m1] = dia.entrada.split(":" ).map(Number);
-      const [h2, m2] = dia.salida.split(":" ).map(Number);
+      const [h1, m1] = dia.entrada.split(":").map(Number);
+      const [h2, m2] = dia.salida.split(":").map(Number);
       const start = h1 * 60 + m1;
       const end = h2 < h1 ? h2 * 60 + m2 + 1440 : h2 * 60 + m2;
 
@@ -63,9 +62,7 @@ export default function CalculadoraNomina() {
       totalBruto += nocturnos * plusNocturno;
 
       if (dia.festivo) {
-        totalBruto +=
-          nocturnos * plusFestivo +
-          (duracion - nocturnos) * plusFestivo;
+        totalBruto += nocturnos * plusFestivo + (duracion - nocturnos) * plusFestivo;
       }
 
       if (["Sábado", "Domingo"].includes(diasSemana[i])) {
@@ -154,7 +151,8 @@ export default function CalculadoraNomina() {
                     copia[i].festivo = e.target.checked;
                     setHorario(copia);
                   }}
-                /> Festivo
+                />{" "}
+                Festivo
               </label>
             </div>
           </div>
@@ -184,6 +182,17 @@ export default function CalculadoraNomina() {
           <li><strong>IRPF:</strong> Retención según porcentaje que pongas</li>
           <li><strong>SS:</strong> Se descuenta automáticamente un 11%</li>
         </ul>
+
+        <div className="mt-4 border-t pt-4">
+          <h3 className="font-semibold">🚧 Conceptos no calculados (de momento)</h3>
+          <ul className="list-disc pl-4 text-gray-600">
+            <li><strong>Antigüedad:</strong> No se incluye ningún plus por trienios o quinquenios</li>
+            <li><strong>Bajas médicas:</strong> No se aplica descuento por IT o accidente</li>
+            <li><strong>Vacaciones:</strong> No diferenciadas de días normales</li>
+            <li><strong>Horas extra no flexibles:</strong> No diferenciadas de las flexibles</li>
+            <li><strong>Pagas extra:</strong> No se consideran en el cálculo</li>
+          </ul>
+        </div>
       </aside>
     </div>
   );
